@@ -9,61 +9,40 @@ cloudinary.config({
 });
 
 const uploadOnCloudinary = async (localFilePath) => {
-  const logFile = path.join(process.cwd(), "debug.log");
+  console.log(localFilePath);
   try {
     if (!localFilePath) return null;
-    const resolvedPath = path.resolve(localFilePath);
-    fs.appendFileSync(
-      logFile,
-      `\n[${new Date().toISOString()}] Attempting upload: ${resolvedPath}`
-    );
 
-    const response = await cloudinary.uploader.upload(resolvedPath, {
+    //upload to cloudinary if localFilePath exists
+    const result = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
     });
 
-    fs.appendFileSync(
-      logFile,
-      `\n[${new Date().toISOString()}] Uploaded to: ${response.url}`
-    );
+    // console.log("file uploaded to cloudinary", result.url);
 
-    if (fs.existsSync(resolvedPath)) {
-      try {
-        fs.unlinkSync(resolvedPath);
-        fs.appendFileSync(
-          logFile,
-          `\n[${new Date().toISOString()}] Unlinked successfully: ${resolvedPath}`
-        );
-      } catch (err) {
-        fs.appendFileSync(
-          logFile,
-          `\n[${new Date().toISOString()}] Unlink FAILED: ${err.message}`
-        );
-      }
-    }
-    return response;
+    fs.unlinkSync(localFilePath); //remove file from localFilePath after uploading to cloudinary
+    return result;
   } catch (error) {
-    fs.appendFileSync(
-      logFile,
-      `\n[${new Date().toISOString()}] Cloudinary ERROR: ${error.message}`
-    );
-    const resolvedPath = localFilePath ? path.resolve(localFilePath) : null;
-    if (resolvedPath && fs.existsSync(resolvedPath)) {
-      try {
-        fs.unlinkSync(resolvedPath);
-        fs.appendFileSync(
-          logFile,
-          `\n[${new Date().toISOString()}] Unlinked after error: ${resolvedPath}`
-        );
-      } catch (err) {
-        fs.appendFileSync(
-          logFile,
-          `\n[${new Date().toISOString()}] Unlink after error FAILED: ${err.message}`
-        );
-      }
+    fs.unlinkSync(localFilePath);
+    return error;
+  }
+};
+
+const deleteFromCloudinary = async (publicId, resourceType = "image") => {
+  try {
+    if (!publicId) {
+      return null;
     }
+
+    const result = cloudinary.uploader.destroy(publicId, {
+      resource_type: resourceType,
+    });
+
+    return result;
+  } catch (error) {
+    console.log("Cloudinary delete error:", error);
     return null;
   }
 };
 
-export { uploadOnCloudinary };
+export { uploadOnCloudinary, deleteFromCloudinary };

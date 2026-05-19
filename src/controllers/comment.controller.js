@@ -183,7 +183,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     },
 
     {
-      $unwind: "owner",
+      $unwind: "$owner",
     },
 
     {
